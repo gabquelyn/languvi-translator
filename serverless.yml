@@ -1,0 +1,119 @@
+org: lonedev
+app: languvi-translator
+service: languvi-translator
+frameworkVersion: "3"
+
+plugins:
+  - serverless-bundle
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  memorySize: 256
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  environment:
+    USER_POOL_ID: { Ref: TranslatorPool }
+    CLIENT_ID: { Ref: TranslatorClient }
+    TRANSLATOR_TABLE: ${self:service}-translatorTable-${sls:stage}
+    MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - cognito-idp:AdminInitiateAuth
+            - cognito-idp:AdminCreateUser
+            - cognito-idp:AdminSetUserPassword
+            - cognito-idp:AdminUpdateUserAttributes
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - sqs:SendMessage
+          Resource:
+            - ${self:custom.translatorTableArn}
+            - ${self:custom.translatorPoolArn}
+            - ${self:custom.MailQueue.arn}
+            - ${self:custom.ordersTableArn}
+  httpApi:
+    authorizers:
+      translatorAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: ${self:custom.cognitoIssuerUrl.Value}
+        audience: 
+          - !Ref TranslatorClient
+
+resources:
+  Resources:
+    TranslatorPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: languvi-translator-auth-pool
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+        AutoVerifiedAttributes:
+          - email
+
+    TranslatorClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: languvi-translator-pool
+        GenerateSecret: false
+        UserPoolId: !Ref TranslatorPool
+        AccessTokenValidity: 5
+        IdTokenValidity: 5
+        ExplicitAuthFlows:
+          - 'ADMIN_NO_SRP_AUTH'
+  
+    TranslatorTable: 
+      Type: AWS::DynamoDB::Table
+      Properties: 
+        TableName: ${self:service}-translatorTable-${sls:stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName : email
+            AttributeType: S
+        
+        KeySchema: 
+          - AttributeName: email
+            KeyType: HASH
+     
+functions:
+  signup:
+    handler: src/authentication/signup.handler
+    events:
+      - httpApi:
+          path: /signup
+          method: POST
+
+  getAuthToken:
+    handler: src/authentication/generateToken.handler
+    events:
+      - httpApi:
+          path: /getToken/{email}
+          method: GET
+custom:
+  translatorTableArn: !GetAtt TranslatorTable.Arn
+  translatorPoolArn: !GetAtt TranslatorPool.Arn
+  region: us-east-1
+  cognitoIssuerUrl: 
+    Value: !Join
+      - ''
+      - - 'https://cognito-idp.'
+        - !Ref 'AWS::Region'
+        - '.amazonaws.com/'
+        - !Ref TranslatorPool
+
+  MailQueue:
+    arn: !ImportValue MailQueue-${sls:stage}-Arn
+    url: !ImportValue MailQueue-${sls:stage}-Url
+  ordersTableArn: !ImportValue OrdersTable-${sls:stage}-Arn
+  ordersTableName: !ImportValue OrdersTable-${sls:stage}-Name
+  bundle:
+    linting: false

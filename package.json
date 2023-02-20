@@ -1,0 +1,16 @@
+{
+  "name": "languvi-translator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1319.0",
+    "serverless-bundle": "^6.0.0"
+  }
+}
