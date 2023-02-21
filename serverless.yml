@@ -17,6 +17,7 @@ provider:
     CLIENT_ID: { Ref: TranslatorClient }
     TRANSLATOR_TABLE: ${self:service}-translatorsTable-${sls:stage}
     MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
+    TRANSLATOR_IMAGE_BUCKET: ${self:custom.translatorImagesBucket.name}
   iam:
     role:
       statements:
@@ -30,11 +31,13 @@ provider:
             - dynamodb:PutItem
             - dynamodb:UpdateItem
             - sqs:SendMessage
+            - s3:PutObject
           Resource:
             - ${self:custom.translatorTableArn}
             - ${self:custom.translatorPoolArn}
             - ${self:custom.MailQueue.arn}
             - ${self:custom.ordersTableArn}
+            - arn:aws:s3:::${self:custom.translatorImagesBucket.name}/*
   httpApi:
     authorizers:
       translatorAuthorizer:
@@ -79,11 +82,37 @@ resources:
         AttributeDefinitions:
           - AttributeName : email
             AttributeType: S
-        
         KeySchema: 
           - AttributeName: email
             KeyType: HASH
-     
+
+    languviTranslatorImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.translatorImagesBucket.name}
+    
+    languviTranslatorImagesBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref languviTranslatorImagesBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicRead
+              Effect: Allow
+              Principal: '*'
+              Action:
+                - s3:GetObject
+              Resource: arn:aws:s3:::${self:custom.translatorImagesBucket.name}/*  
+  Outputs:
+    translatorTableName:
+      Value: ${self:service}-translatorsTable-${sls:stage}
+      Export:
+        Name: ${self:service}-translatorsTable-${sls:stage}-Name
+    translatorTableArn:
+      Value: ${self:custom.translatorTableArn}
+      Export: 
+        Name: ${self:service}-translatorsTable-${sls:stage}-Arn
+        
 functions:
   signup:
     handler: src/authentication/signup.handler
@@ -113,6 +142,24 @@ functions:
           path: /login
           method: POST
 
+  editProfile:
+    handler: src/translator/editprofile.handler
+    events:
+      - httpApi:
+          path: /editprofile
+          method: PUT
+          authorizer:
+            name: translatorAuthorizer
+  
+  getprofile: 
+    handler: src/translator/getprofile.handler
+    events:
+      - httpApi:
+          path: /getprofile
+          method: GET
+          authorizer:
+            name: translatorAuthorizer
+
 custom:
   translatorTableArn: !GetAtt TranslatorTable.Arn
   translatorPoolArn: !GetAtt TranslatorPool.Arn
@@ -124,7 +171,9 @@ custom:
         - !Ref 'AWS::Region'
         - '.amazonaws.com/'
         - !Ref TranslatorPool
-
+  translatorImagesBucket:
+    name: languvi-translator-images-bucket-${self:provider.stage}
+    arn: !GetAtt languviTranslatorImagesBucket.Arn
   MailQueue:
     arn: !ImportValue MailQueue-${sls:stage}-Arn
     url: !ImportValue MailQueue-${sls:stage}-Url
