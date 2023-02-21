@@ -15,7 +15,7 @@ provider:
   environment:
     USER_POOL_ID: { Ref: TranslatorPool }
     CLIENT_ID: { Ref: TranslatorClient }
-    TRANSLATOR_TABLE: ${self:service}-translatorTable-${sls:stage}
+    TRANSLATOR_TABLE: ${self:service}-translatorsTable-${sls:stage}
     MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
   iam:
     role:
@@ -74,7 +74,7 @@ resources:
     TranslatorTable: 
       Type: AWS::DynamoDB::Table
       Properties: 
-        TableName: ${self:service}-translatorTable-${sls:stage}
+        TableName: ${self:service}-translatorsTable-${sls:stage}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName : email
@@ -98,6 +98,21 @@ functions:
       - httpApi:
           path: /getToken/{email}
           method: GET
+
+  confirmEmail:
+    handler: src/authentication/confirmEmail.handler
+    events:
+      - httpApi:
+          path: /auth_email/{email}
+          method: POST
+  
+  login:
+    handler: src/authentication/signin.handler
+    events:
+      - httpApi:
+          path: /login
+          method: POST
+
 custom:
   translatorTableArn: !GetAtt TranslatorTable.Arn
   translatorPoolArn: !GetAtt TranslatorPool.Arn
