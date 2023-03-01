@@ -84,9 +84,18 @@ resources:
         AttributeDefinitions:
           - AttributeName : email
             AttributeType: S
+          - AttributeName: approved
+            AttributeType: S
         KeySchema: 
           - AttributeName: email
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: translatorStatus
+            KeySchema: 
+              - AttributeName: approved
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
 
     languviTranslatorBucket:
       Type: AWS::S3::Bucket
@@ -143,7 +152,16 @@ functions:
       - httpApi:
           path: /login
           method: POST
-
+  
+  updatepassword:
+    handler: src/authentication/updatepassword.handler
+    events:
+      - httpApi:
+          path: /updatepassword
+          method: POST
+          authorizer:
+            name: translatorAuthorizer
+  
   editProfile:
     handler: src/translator/editprofile.handler
     events:

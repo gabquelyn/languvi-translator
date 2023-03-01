@@ -23,16 +23,8 @@ async function confirm_email(event, context){
             ]
         }
 
-        const _params = {
-            Password: result.data.password,
-            UserPoolId: process.env.USER_POOL_ID,
-            Username: email,
-            Permanent: true
-        }
-
         try{
            await cognito.adminUpdateUserAttributes(params).promise();
-           await cognito.adminSetUserPassword(_params).promise();
            return sendResponse(200, {message: 'Email verified successfully'})
         }catch(err){
             console.error(err.stack);

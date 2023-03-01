@@ -22,7 +22,7 @@ async function pickToTranslate(event, context){
             '#translator' : 'translator'
         }
     }
-
+    
     const result = await update(params)
     if(result.error){
         return sendResponse(501, {message: result.error.message})
