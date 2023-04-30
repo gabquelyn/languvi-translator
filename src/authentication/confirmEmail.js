@@ -3,8 +3,7 @@ import { get } from "../../lib/actions";
 import sendResponse from "../../lib/sendResponse";
 const cognito = new AWS.CognitoIdentityServiceProvider();
 async function confirm_email(event, context){
-    const {email} = event.pathParameters
-    const {token} = JSON.parse(event.body);
+    const {token, email} = JSON.parse(event.body);
 
     const result = await get(process.env.TRANSLATOR_TABLE, {email})
     if(result.error){

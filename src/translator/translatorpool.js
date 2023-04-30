@@ -22,16 +22,17 @@ async function translatorPool(event, context){
         return sendResponse(501, {message: response.error.message})
     }
     const orders = response.data
-    const translator_subjects = translator_result.subject_fields
+    // const translator_subjects = translator_result.subject_fields
     const translator_source_language = translator_result.language_pairs.map(object => object.source);
     const translator_target_language = translator_result.language_pairs.map(object => object.target);
 
 
-    const output = orders.filter(order => (translator_subjects.includes(order.subject) && translator_source_language.includes(order.source) && translator_target_language.includes(order.target)))
+    const output = orders.filter(order => (translator_source_language.includes(order.source) && translator_target_language.includes(order.target)))
 
    return sendResponse(200, {message: output})
 }
 
 export const handler = translatorPool;
+
 
 

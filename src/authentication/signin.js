@@ -19,7 +19,7 @@ export async function login(event, context) {
     const response = await cognito.adminInitiateAuth(params).promise();
     return sendResponse(200, {
       message: "Success",
-      token: response.AuthenticationResult.AccessToken,
+      token: response.AuthenticationResult,
     });
   } catch (err) {
     console.error(err);

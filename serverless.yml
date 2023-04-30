@@ -17,7 +17,7 @@ provider:
     CLIENT_ID: { Ref: TranslatorClient }
     TRANSLATOR_TABLE: ${self:service}-translatorsTable-${sls:stage}
     MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
-    ORDERS_TABLE: ${self:custom.ordersTableName}
+    ORDERS_TABLE: ${self:custom.clientOrdersTable.name}
     TRANSLATOR_BUCKET: ${self:custom.translatorBucket.name}
   iam:
     role:
@@ -38,9 +38,11 @@ provider:
             - ${self:custom.translatorTableArn}
             - ${self:custom.translatorPoolArn}
             - ${self:custom.MailQueue.arn}
-            - ${self:custom.ordersTableArn}
+            - ${self:custom.clientOrdersTable.arn}
             - arn:aws:s3:::${self:custom.translatorBucket.name}/*
+
   httpApi:
+    cors: true
     authorizers:
       translatorAuthorizer:
         type: jwt
@@ -143,7 +145,7 @@ functions:
     handler: src/authentication/confirmEmail.handler
     events:
       - httpApi:
-          path: /auth_email/{email}
+          path: /auth_email
           method: POST
   
   login:
@@ -250,7 +252,10 @@ custom:
   MailQueue:
     arn: !ImportValue MailQueue-${sls:stage}-Arn
     url: !ImportValue MailQueue-${sls:stage}-Url
-  ordersTableArn: !ImportValue OrdersTable-${sls:stage}-Arn
-  ordersTableName: !ImportValue OrdersTable-${sls:stage}-Name
+
+  clientOrdersTable:
+    name: !ImportValue clientOrdersTable-${self:provider.stage}-Name
+    arn: !ImportValue clientOrdersTable-${self:provider.stage}-Arn
+
   bundle:
     linting: false
