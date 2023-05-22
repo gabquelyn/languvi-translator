@@ -141,6 +141,20 @@ functions:
           path: /getToken/{email}
           method: GET
 
+  forgot:
+    handler: src/authentication/forgot.handler
+    events:
+      - httpApi:
+          path: /forgot/{email}
+          method: POST
+
+  confirmforgot:
+    handler: src/authentication/confirmforgot.handler
+    events:
+      - httpApi:
+          path: /confirm
+          method: POST
+
   confirmEmail:
     handler: src/authentication/confirmEmail.handler
     events:
@@ -187,16 +201,25 @@ functions:
     events:
       - httpApi:
           path: /picktranslate/{orderId}
+          method: POST
+          authorizer:
+            name: translatorAuthorizer
+
+  getOrder:
+    handler: src/translator/getOrder.handler
+    events:
+      - httpApi:
+          path: /order/{orderId}
           method: GET
           authorizer:
             name: translatorAuthorizer
 
-  picktoproofread:
-    handler: src/translator/proofread.handler
+  openMate:
+    handler: src/translator/useCat.handler
     events:
       - httpApi:
-          path: /proofread/{orderId}
-          method: GET
+          path: /cat
+          method: POST
           authorizer:
             name: translatorAuthorizer
 
@@ -209,32 +232,33 @@ functions:
           authorizer:
             name: translatorAuthorizer
 
-  proofreaderpool:
-    handler: src/translator/proofreaderpool.handler
+  getproject:
+    handler: src/translator/getproject.handler
     events:
       - httpApi:
-          path: /proofreaderpool
+          path: /project/{orderId}
           method: GET
           authorizer:
             name: translatorAuthorizer
 
-  submitfortranslate:
-    handler: src/translator/submitTranslate.handler
+  getjobs:
+    handler: src/translator/getjobs.handler
     events:
       - httpApi:
-          path: /submitfortranslate
+          path: /jobs
+          method: GET
+          authorizer:
+            name: translatorAuthorizer
+
+  submit:
+    handler: src/translator/submit.handler
+    events:
+      - httpApi:
+          path: /submit
           method: POST
           authorizer:
             name: translatorAuthorizer
 
-  submitforproofread:
-    handler: src/translator/submitProofread.handler
-    events:
-      - httpApi:
-          path: /submitforproofread
-          method: POST
-          authorizer:
-            name: translatorAuthorizer
 
 custom:
   translatorTableArn: !GetAtt TranslatorTable.Arn
