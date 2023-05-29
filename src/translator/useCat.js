@@ -21,10 +21,6 @@ async function useCat(event, context) {
     return sendResponse(502, {message: "CatTools not enabled for this order!"})
   }
   
-  if(order_details.Item.mate_data[filekey]){
-    return sendResponse(502, {message: "Project already created"})
-  }
-
   // get the file from s3 bucket
   const params = {
     Bucket: process.env.CLIENT_BUCKET_NAME,

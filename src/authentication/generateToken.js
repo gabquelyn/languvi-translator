@@ -23,7 +23,7 @@ async function getAuthToken(event, context){
         QueueUrl: process.env.MAIL_QUEUE_URL,
         MessageBody: JSON.stringify({
             subject: 'Verify your email address',
-            body: `Your email verification code is ${accessToken}, it expires in 3 hours`,
+            body: `Your email verification code is ${accessToken}`,
             recipient: email
         })
     }

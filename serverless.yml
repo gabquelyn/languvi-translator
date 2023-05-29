@@ -19,6 +19,10 @@ provider:
     MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
     ORDERS_TABLE: ${self:custom.clientOrdersTable.name}
     TRANSLATOR_BUCKET: ${self:custom.translatorBucket.name}
+    CLIENT_BUCKET_NAME : ${self:custom.clientBucket.name}
+    API_KEY: ${self:custom.mateCatKeys.api}
+    SECRET_KEY: ${self:custom.mateCatKeys.secret}
+
   iam:
     role:
       statements:
@@ -40,6 +44,7 @@ provider:
             - ${self:custom.MailQueue.arn}
             - ${self:custom.clientOrdersTable.arn}
             - arn:aws:s3:::${self:custom.translatorBucket.name}/*
+            - ${self:custom.clientBucket.arn}
 
   httpApi:
     cors: true
@@ -116,6 +121,7 @@ resources:
               Action:
                 - s3:GetObject
               Resource: arn:aws:s3:::${self:custom.translatorBucket.name}/*  
+              
   Outputs:
     translatorTableName:
       Value: ${self:service}-translatorsTable-${sls:stage}
@@ -223,6 +229,15 @@ functions:
           authorizer:
             name: translatorAuthorizer
 
+  catprojectdetails:
+    handler: src/translator/catjobdetails.handler
+    events:
+      - httpApi:
+          path: /catjobdetails
+          method: POST
+          authorizer:
+            name: translatorAuthorizer
+
   translatorpool:
     handler: src/translator/translatorpool.handler
     events:
@@ -277,9 +292,17 @@ custom:
     arn: !ImportValue MailQueue-${sls:stage}-Arn
     url: !ImportValue MailQueue-${sls:stage}-Url
 
+  clientBucket:
+    name: !ImportValue languvi-client-clientBucket-${sls:stage}-Name
+    arn: !ImportValue languvi-client-clientBucket-${sls:stage}-Arn
+    
   clientOrdersTable:
     name: !ImportValue clientOrdersTable-${self:provider.stage}-Name
     arn: !ImportValue clientOrdersTable-${self:provider.stage}-Arn
+
+  mateCatKeys:
+    api: ZTEwOWMTEwNT0ce62be1
+    secret: Y2YyMGOGY3Yz1728d413
 
   bundle:
     linting: false
